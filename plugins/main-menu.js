@@ -9,6 +9,7 @@ const handler = async (m, { conn, usedPrefix: _p, isOwner, __dirname, args }) =>
   downloader: 'Downloader Menu',
   database: 'Database Menu',
   sticker: 'Sticker Menu',
+  tools: 'Tools Menu',
   fun: 'Fun Menu',
   group: 'Group Menu',
   xp: 'XP & Level Menu',

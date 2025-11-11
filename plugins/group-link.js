@@ -1,4 +1,4 @@
-let handler = async (m, { args, groupMetadata }) => {
+let handler = async (m) => {
 m.reply('https://chat.whatsapp.com/' + await conn.groupInviteCode(m.chat))
 }
 handler.help = ['linkgc']

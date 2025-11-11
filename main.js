@@ -12,7 +12,6 @@ import { spawn } from 'child_process';
 import { tmpdir } from 'os';
 import { format } from 'util';
 import { makeWASocket, protoType, serialize } from './lib/simple.js';
-import { Boom } from '@hapi/boom';
 import chalk from 'chalk';
 import pino from 'pino';
 import syntaxerror from 'syntax-error';
