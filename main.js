@@ -105,12 +105,6 @@ const connectionOptions = {
 
 global.conn = makeWASocket(connectionOptions);
 
-if (fs.existsSync('./sessions/auth.db') && !conn.authState.creds.registered) {
-	console.log(chalk.yellow('-- WARNING: creds.json is broken, please delete it first --'));
-	//fs.rmSync('./sessions', { recursive: true, force: true })
-	process.exit(0);
-}
-
 if (!conn.authState.creds.registered) {
 	console.log(chalk.bgWhite(chalk.blue('Generating code...')));
 	try {
@@ -142,34 +136,42 @@ if (global.db) {
 async function connectionUpdate(update) {
 	const { receivedPendingNotifications, connection, lastDisconnect, isOnline } = update;
 
-	if (connection == 'connecting') {
-		console.log(chalk.redBright('⚡ Mengaktifkan Bot, Mohon tunggu sebentar...'));
-	} else if (connection == 'open') {
-		console.log(chalk.green('✅ Tersambung'));
-	}
+	if (connection === 'connecting') console.log(chalk.redBright('⚡ Mengaktifkan Bot, Mohon tunggu sebentar...'));
 
-	if (isOnline == true) {
-		console.log(chalk.green('Status Aktif'));
-	} else if (isOnline == false) {
-		console.log(chalk.red('Status Mati'));
-	}
+	if (connection === 'open') console.log(chalk.green('✅ Tersambung'));
 
-	if (receivedPendingNotifications) {
-		console.log(chalk.yellow('Menunggu Pesan Baru'));
-	}
+	if (isOnline === true) console.log(chalk.green('Status Aktif'));
+	else if (isOnline === false) console.log(chalk.red('Status Mati'));
 
-	if (connection == 'close') {
-		console.log(chalk.red('⏱️ Koneksi terputus & mencoba menyambung ulang...'));
-	}
+	if (receivedPendingNotifications) console.log(chalk.yellow('Menunggu Pesan Baru'));
 
-	if (lastDisconnect && lastDisconnect.error && lastDisconnect.error.output && lastDisconnect.error.output.payload) {
-		console.log(chalk.red(lastDisconnect.error.output.payload.message));
+	// if (connection === 'close') console.log(chalk.red('⏱️ Koneksi terputus & mencoba menyambung ulang...'))
+
+	const output = lastDisconnect?.error?.output;
+	if (output?.payload) {
+		if (output.statusCode === 401) {
+			console.log(chalk.red('Session logged out. Recreate session...'));
+			fs.rmSync('./sessions', { recursive: true, force: true });
+			parentPort.postMessage('restart');
+			return;
+		} else if (output.statusCode === 403) {
+			console.log(chalk.red('WhatsApp account banned :D'));
+			process.exit(0);
+		} else if (output.statusCode === 515) {
+			console.log(chalk.yellow('Restart Required, Restarting....'));
+		} else if (output.statusCode === 428) {
+			console.log(chalk.yellow('Connection closed, Restarting....'));
+		} else if (output.statusCode === 408) {
+			console.log(chalk.yellow('Connection timed out, Restarting....'));
+		} else if (output.statusCode === 408) {
+			console.log(chalk.yellow('Connection timed out, Restarting....'));
+		} else {
+			console.log(chalk.red(output.payload.message));
+		}
 		await global.reloadHandler(true);
 	}
 
-	if (global.db.data == null) {
-		await global.loadDatabase();
-	}
+	if (!global.db.data) await global.loadDatabase();
 }
 
 process.on('uncaughtException', console.error);
